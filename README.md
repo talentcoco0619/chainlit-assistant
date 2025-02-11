@@ -1,77 +1,60 @@
----
-title: 'Chainlit Cookbook: codeinterpreter'
-tags: ['chainlit', 'cookbook', 'codeinterpreter']
----
+﻿# Bot Authentication
 
-# Chainlit Codeinterpreter
+Bot Framework v4 bot authentication sample
 
-Chainlit is an AI-driven project designed to carry out various tasks. It is built on a plugin architecture that can easily extend new features.
+This bot has been created using [Bot Framework](https://dev.botframework.com), it shows how to use authentication in your bot using OAuth.
 
-## Project Features
+The sample uses the bot authentication capabilities in [Azure Bot Service](https://docs.botframework.com), providing features to make it easier to develop a bot that authenticates users to various identity providers such as Azure AD (Azure Active Directory), GitHub, Uber, etc.
 
-- **Plugin Architecture**: Chainlit uses a flexible and extensible plugin architecture. Each plugin is a folder containing `functions.py` and `config.json` files, defining the functionality and configuration of the plugin.
+NOTE: Microsoft Teams currently differs slightly in the way auth is integrated with the bot. Refer to sample 5 [here](https://github.com/OfficeDev/Microsoft-Teams-Samples#bots-samples-using-the-v4-sdk).
 
-- **Function Manager**: The function manager is responsible for parsing and calling the functions defined in the `functions.py` file of each plugin.
+## To try this sample
 
-- **AI Driven**: Chainlit leverages the power of AI to understand and generate human language, enabling it to handle a variety of tasks.
-
-## Current Plugins
-
-1. **General Plugin**: This plugin provides the functionality of displaying and uploading images.
-
-2. **Python Interpreter Plugin**: This plugin includes a Python executor for running Python code, which is very useful for tasks such as data analysis and table processing.
-
-3. **Vue Plugin**: Currently under development, this plugin is designed to work with Vue projects, automating the entire Vue project modification through the chat interface.
-
-## Plugin Structure and Usage
-
-Each plugin is a directory in the 'plugins' folder. The directory name is the name of the plugin. Each plugin directory contains at least two files:
-
-1. `functions.py`: This file contains the functions provided by the plugin. Each function should be a top-level function (i.e., not a method of a class or an inner function), and should be named in a way that reflects its functionality. Functions can be synchronous or asynchronous.
-
-2. `config.json`: This file contains the configuration of the plugin. It is a JSON file with a required field: `enabled`. If `enabled` is set to `true`, the functions of the plugin will be imported and available for use. If `enabled` is set to `false`, the functions of the plugin will not be imported.
-
-To use a plugin, make sure it is enabled in its `config.json` file. Once enabled, the functions provided by the plugin will be automatically imported when the script runs. The AI assistant will be able to call these functions in the conversation.
-
-## Creating Plugins
-
-To create a plugin, follow these steps:
-
-1. Create a new directory in the 'plugins' folder. The directory name will be the name of the plugin.
-
-2. In the new directory, create a file named `functions.py`. In this file, define the functions you want the plugin to provide. Each function should be a top-level function and should be named in a way that reflects its functionality.
-
-3. In the same directory, create a file named `config.json`. In this file, add the following JSON:
-
-```json
-{
-    "enabled": true
-}
+- Clone the repository
+```bash
+git clone https://github.com/Microsoft/botbuilder-samples.git
 ```
+- Bring up a terminal, navigate to `botbuilder-samples\samples\python\18.bot-authentication` folder
+- Activate your desired virtual environment
+- In the terminal, type `pip install -r requirements.txt`
+- Deploy your bot to Azure, see [Deploy your bot to Azure](https://aka.ms/azuredeployment)
+- [Add Authentication to your bot via Azure Bot Service](https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-authentication?view=azure-bot-service-4.0&tabs=csharp)
+- Modify `APP_ID`, `APP_PASSWORD`, and `CONNECTION_NAME` in `config.py`
 
-This will enable the plugin by default. If you want to disable the plugin, you can change `true` to `false`.
+After Authentication has been configured via Azure Bot Service, you can test the bot.
 
-## Running the Project
+- Run your bot with `python app.py`
 
-To run this project, you need to follow these steps:
+## Testing the bot using Bot Framework Emulator
 
-1. First, you need to create a `.env` file in the root directory of the project. You can do this by copying the `.env.example` file.
+[Bot Framework Emulator](https://github.com/microsoft/botframework-emulator) is a desktop application that allows bot developers to test and debug their bots on localhost or running remotely through a tunnel.
 
-2. In the `.env` file, you need to provide your OpenAI API key. This should be a string, like `OPENAI_API_KEY=your_api_key_here`. Please replace `your_api_key_here` with your actual OpenAI API key.
+- Install the latest Bot Framework Emulator from [here](https://github.com/Microsoft/BotFramework-Emulator/releases)
 
-3. Still in the `.env` file, you need to set the base URL for the OpenAI API. This should be a string, like `OPENAI_API_BASE=https://api.openai.com/v1`.
+### Connect to the bot using Bot Framework Emulator
 
-4. After saving the `.env` file, you need to install Chainlit. You can do this with pip: `pip install chainlit`.
+- Launch Bot Framework Emulator
+- File -> Open Bot
+- Enter a Bot URL of `http://localhost:3978/api/messages`
 
-5. Once Chainlit is installed, you can run the project with the following command: `chainlit run app.py -w`.
+## Interacting with the bot
 
-## Contributing
+This sample uses bot authentication capabilities in Azure Bot Service, providing features to make it easier to develop a bot that authenticates users to various identity providers such as Azure AD (Azure Active Directory), GitHub, Uber, etc. These updates also take steps towards an improved user experience by eliminating the magic code verification for some clients.
 
-Contributions are welcome! Please read the contribution guide to learn how to contribute to this project.
+## Deploy the bot to Azure
 
-## License
+To learn more about deploying a bot to Azure, see [Deploy your bot to Azure](https://aka.ms/azuredeployment) for a complete list of deployment instructions.
 
-This project is licensed under the terms of the MIT license.
+## Further reading
 
-title : OpenAI Functions CodeInterpreter
-tags : [openai, codeinterpreter]
+- [Bot Framework Documentation](https://docs.botframework.com)
+- [Bot Basics](https://docs.microsoft.com/azure/bot-service/bot-builder-basics?view=azure-bot-service-4.0)
+- [Azure Portal](https://portal.azure.com)
+- [Add Authentication to Your Bot Via Azure Bot Service](https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-authentication?view=azure-bot-service-4.0&tabs=csharp)
+- [Activity processing](https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-concept-activity-processing?view=azure-bot-service-4.0)
+- [Azure Bot Service Introduction](https://docs.microsoft.com/azure/bot-service/bot-service-overview-introduction?view=azure-bot-service-4.0)
+- [Azure Bot Service Documentation](https://docs.microsoft.com/azure/bot-service/?view=azure-bot-service-4.0)
+- [Azure CLI](https://docs.microsoft.com/cli/azure/?view=azure-cli-latest)
+- [Azure Portal](https://portal.azure.com)
+- [Language Understanding using LUIS](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/)
+- [Channels and Bot Connector Service](https://docs.microsoft.com/en-us/azure/bot-service/bot-concepts?view=azure-bot-service-4.0)
