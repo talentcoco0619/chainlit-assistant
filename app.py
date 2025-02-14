@@ -1,9 +1,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-import sys
-import traceback
-from datetime import datetime
+"""
+This sample shows how to create a bot that demonstrates the following:
+- Use [LUIS](https://www.luis.ai) to implement core AI capabilities.
+- Implement a multi-turn conversation using Dialogs.
+- Handle user interruptions for such things as `Help` or `Cancel`.
+- Prompt for and validate requests for information from the user.
+"""
 from http import HTTPStatus
 
 from aiohttp import web
@@ -11,66 +15,57 @@ from aiohttp.web import Request, Response, json_response
 from botbuilder.core import (
     ConversationState,
     MemoryStorage,
-    TurnContext,
     UserState,
 )
 from botbuilder.core.integration import aiohttp_error_middleware
+from botbuilder.schema import Activity
+from botbuilder.applicationinsights import ApplicationInsightsTelemetryClient
+from botbuilder.integration.applicationinsights.aiohttp import (
+    AiohttpTelemetryProcessor,
+    bot_telemetry_middleware,
+)
 from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFrameworkAuthentication
-from botbuilder.schema import Activity, ActivityTypes
 
-from bots import AuthBot
-
-# Create the loop and Flask app
 from config import DefaultConfig
-from dialogs import MainDialog
+from dialogs import MainDialog, BookingDialog
+from bots import DialogAndWelcomeBot
+
+from adapter_with_error_handler import AdapterWithErrorHandler
+from flight_booking_recognizer import FlightBookingRecognizer
 
 CONFIG = DefaultConfig()
 
 # Create adapter.
 # See https://aka.ms/about-bot-adapter to learn more about how bots work.
-ADAPTER = CloudAdapter(ConfigurationBotFrameworkAuthentication(CONFIG))
+SETTINGS = ConfigurationBotFrameworkAuthentication(CONFIG)
 
-# Catch-all for errors.
-async def on_error(context: TurnContext, error: Exception):
-    # This check writes out errors to console log .vs. app insights.
-    # NOTE: In production environment, you should consider logging this to Azure
-    #       application insights.
-    print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
-    traceback.print_exc()
-
-    # Send a message to the user
-    await context.send_activity("The bot encountered an error or bug.")
-    await context.send_activity(
-        "To continue to run this bot, please fix the bot source code."
-    )
-
-    # Send a trace activity if we're talking to the Bot Framework Emulator
-    if context.activity.channel_id == "emulator":
-        # Create a trace activity that contains the error object
-        trace_activity = Activity(
-            label="TurnError",
-            name="on_turn_error Trace",
-            timestamp=datetime.utcnow(),
-            type=ActivityTypes.trace,
-            value=f"{error}",
-            value_type="https://www.botframework.com/schemas/error",
-        )
-        # Send a trace activity, which will be displayed in Bot Framework Emulator
-        await context.send_activity(trace_activity)
-
-
-ADAPTER.on_turn_error = on_error
-
-# Create MemoryStorage and state
+# Create MemoryStorage, UserState and ConversationState
 MEMORY = MemoryStorage()
 USER_STATE = UserState(MEMORY)
 CONVERSATION_STATE = ConversationState(MEMORY)
 
-# Create dialog
-DIALOG = MainDialog(CONFIG.CONNECTION_NAME)
+# Create adapter.
+# See https://aka.ms/about-bot-adapter to learn more about how bots work.
+ADAPTER = AdapterWithErrorHandler(SETTINGS, CONVERSATION_STATE)
 
-# Create Bot
-BOT = AuthBot(CONVERSATION_STATE, USER_STATE, DIALOG)
+# Create telemetry client.
+# Note the small 'client_queue_size'.  This is for demonstration purposes.  Larger queue sizes
+# result in fewer calls to ApplicationInsights, improving bot performance at the expense of
+# less frequent updates.
+INSTRUMENTATION_KEY = CONFIG.APPINSIGHTS_INSTRUMENTATION_KEY
+TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(
+    INSTRUMENTATION_KEY, telemetry_processor=AiohttpTelemetryProcessor(), client_queue_size=10
+)
+
+# Code for enabling activity and personal information logging.
+# TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(telemetry_client=TELEMETRY_CLIENT, log_personal_information=True)
+# ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
+
+# Create dialogs and Bot
+RECOGNIZER = FlightBookingRecognizer(CONFIG)
+BOOKING_DIALOG = BookingDialog()
+DIALOG = MainDialog(RECOGNIZER, BOOKING_DIALOG, telemetry_client=TELEMETRY_CLIENT)
+BOT = DialogAndWelcomeBot(CONVERSATION_STATE, USER_STATE, DIALOG, TELEMETRY_CLIENT)
 
 
 # Listen for incoming requests on /api/messages.
@@ -78,7 +73,7 @@ async def messages(req: Request) -> Response:
     return await ADAPTER.process(req, BOT)
 
 
-APP = web.Application(middlewares=[aiohttp_error_middleware])
+APP = web.Application(middlewares=[bot_telemetry_middleware, aiohttp_error_middleware])
 APP.router.add_post("/api/messages", messages)
 
 if __name__ == "__main__":
