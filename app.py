@@ -1,81 +1,86 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License.
+"""Main application file.
+To run this local do: "cd web/sia-web && clear && python -m chainlit run app.py --port 8001 -w -d"
+"""
 
+import os
 import sys
-import traceback
-from datetime import datetime
-from http import HTTPStatus
+import uuid
 
-from aiohttp import web
-from aiohttp.web import Request, Response, json_response
-from botbuilder.core import (
-    TurnContext,
+import chainlit as cl
+from loguru import logger
+
+from helper.constants import AUTHOR
+
+from chainlit.oauth_providers import providers
+
+import components
+from components.auth import CustomEntraIdOAuthProvider
+
+LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
+
+logger.remove()
+logger.add(
+    sys.stdout,
+    level=LOGGING_LEVEL,
+    colorize=True,
 )
-from botbuilder.core.integration import aiohttp_error_middleware
-from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFrameworkAuthentication
-from botbuilder.schema import Activity, ActivityTypes
 
-from bots import ScaleoutBot
+providers[2] = CustomEntraIdOAuthProvider()
 
-# Create the loop and Flask app
-from config import DefaultConfig
-from dialogs import RootDialog
-from store import MemoryStore
+@cl.oauth_callback
+async def oauth_callback(
+    provider_id: str,
+    token: str,     #this token is valid graph token
+    raw_user_data: dict[str, str],
+    default_user: cl.User,
+    redirected_uri: str | None = None,
+) -> cl.User | None:
+    """Handle OAuth callback."""
+    logger.info(token)
 
-CONFIG = DefaultConfig()
+    logger.trace(default_user.metadata)
 
-# Create adapter.
-# See https://aka.ms/about-bot-adapter to learn more about how bots work.
-ADAPTER = CloudAdapter(ConfigurationBotFrameworkAuthentication(CONFIG))
+    #1. This works
+    #del default_user.metadata["image"]
+    #default_user.metadata["token"] = token
 
-# Catch-all for errors.
-async def on_error(context: TurnContext, error: Exception):
-    # This check writes out errors to console log .vs. app insights.
-    # NOTE: In production environment, you should consider logging this to Azure
-    #       application insights.
-    print(f"\n [on_turn_error] unhandled error: {error}", file=sys.stderr)
-    traceback.print_exc()
+    #2. This does not work = unauthorized in terminal and blank browser
+    #default_user.metadata["token"] = token
 
-    # Send a message to the user
-    await context.send_activity("The bot encountered an error or bug.")
-    await context.send_activity(
-        "To continue to run this bot, please fix the bot source code."
-    )
-    # Send a trace activity if we're talking to the Bot Framework Emulator
-    if context.activity.channel_id == "emulator":
-        # Create a trace activity that contains the error object
-        trace_activity = Activity(
-            label="TurnError",
-            name="on_turn_error Trace",
-            timestamp=datetime.utcnow(),
-            type=ActivityTypes.trace,
-            value=f"{error}",
-            value_type="https://www.botframework.com/schemas/error",
-        )
-        # Send a trace activity, which will be displayed in Bot Framework Emulator
-        await context.send_activity(trace_activity)
+    #3. This results in an error:
+    #cl.user_session.set("token", token)
 
+    default_user.display_name = raw_user_data["displayName"]
+    default_user.metadata["sessionId"] = str(uuid.uuid4())
 
-ADAPTER.on_turn_error = on_error
+    return default_user
 
-# Create the Bot
-STORAGE = MemoryStore()
-# Use BlobStore to test with Azure Blob storage.
-# STORAGE = BlobStore(CONFIG.BLOB_ACCOUNT_NAME, CONFIG.BLOB_KEY, CONFIG.BLOB_CONTAINER)
-DIALOG = RootDialog()
-BOT = ScaleoutBot(STORAGE, DIALOG)
+@cl.on_message
+async def main(message: cl.Message):
+    """Handle user message."""
+
+    logger.trace(message.content)
+
+    user:cl.User | None = cl.user_session.get("user", None)
+    logger.trace(user)
+    if user is None:
+        msg = "User not found in session."
+        raise ValueError(msg)
+    
+    user_token: str = user.metadata["graph_token"]
 
 
-# Listen for incoming requests on /api/messages
-async def messages(req: Request) -> Response:
-    return await ADAPTER.process(req, BOT)
+    #user_token: str | None = cl.user_session.get("http_cookie")
+    #user_token: str | None = TOKEN_MAP.get(user.identifier)
 
-
-APP = web.Application(middlewares=[aiohttp_error_middleware])
-APP.router.add_post("/api/messages", messages)
-
-if __name__ == "__main__":
-    try:
-        web.run_app(APP, host="localhost", port=CONFIG.PORT)
-    except Exception as error:
-        raise error
+    logger.debug(user_token)
+    if not user_token:
+        await cl.Message(content="User token not found in session.", author=AUTHOR).send()
+        raise ValueError("User token not found in session.")
+    
+    if message.content.startswith("/"):
+        stop = await components.handle_commands(message, user, user_token)
+        if stop is True:
+            return
+        
+    await components.handle_message(message, user, user_token)
