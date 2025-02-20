@@ -1,7 +1,7 @@
 import os
 import base64
 from datetime import UTC, datetime, timedelta
-
+from zoneinfo import Zonelnfo
 import httpx
 from loguru import logger
 from fastapi import HTTPException
@@ -12,20 +12,75 @@ from helper.web import call_api
 from helper.constants import (
     DATA_GRAPH_RUNSCRIPT_ENDPOINT,
     DATA_GRAPH_GROUP_MEMBERSHIP_ENDPOINT,
-    CLIENT_ID,
-    CLIENT_SECRET,
-    TENANT_ID,
-    APP_ID,
-    CONFIG_PATH,
+    get_log,
+    call_api,
+    read_json,
 )
-from integrations.storage import read_json, get_table
+SHARED_STORAGE_PATH = os.getenv("SHARED_STORAGE_PATH")
+CONFIG_PATH = f"{SHARED_STORAGE_PATH}/.config"
 
+APP_ID = os.getenv("APP_ROLL_ID", "8d7fd7ba-2648-48fa-a383-38308c1f9366")
 SCOPE = "https://graph.microsoft.com/user.Read offline_access"
+CLIENT_ID = os.getenv("OAUTH_AZURE_AD_CLIENT_ID")
+CLIENT_SECRET = os.getenv("OAUTH_AZURE_AD_CLIENT_SECRET")
 TOKEN_URL = (
     f"https://login.microsoftonline.com/{os.environ.get('OAUTH_AZURE_AD_TENANT_ID', '')}/oauth2/v2.0/token"
     if os.environ.get("OAUTH_AZURE_AD_ENABLE_SINGLE_TENANT")
     else "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 )
+
+async def refresh_token(token: str, token_expires: str, refresh_token: str) -> dict:
+    """Refreshes the access token if it has expired.
+    
+    Args :
+        token (str): The current access token.
+        token_expires (str): The expiration date and time of the access token.
+        refresh_token (str): The refresh token used to obtain a new access token.
+
+    Returns :
+        dict: The new access token and its expiration date and time.
+    """
+    logger.info(f"Checking if token is expired {token_expires}")
+    now = datetime.now(UTC)
+    datetime_object = datetime.strptime(token_expires[:-6], "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=Zonelnfo("UTC"))
+
+    if now > datetime_object:
+        logger.info("Token expired")
+        token = await get_token_by_refresh_token(refresh_token)
+        return token
+    return {}
+
+async def get_token_by_refresh_token(refresh_token: str) -> dict:
+    """Get a new scope or refresh a token.
+
+    Args:
+        refresh_token(str): The refresh token.
+
+    Returns :
+        dict: A dictionary containing the token data, including the access token, expiration time, and refresh token.
+    """
+    payload = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "scope": SCOPE,
+    }
+    response = await call_api(url=TOKEN_URL, data=payload)
+    token_data =response
+    if not token_data["access_token"]:
+        logger.exception(f"Failed to get the access token for {SCOPE}")
+        return ""
+    logger.info(f"Successfully retrieved token for {SCOPE}")
+
+    now = datetime.now(UTC)
+    expires_in = token_data["expires_in"] - 10
+    expires_at = now + timedelta(0, expires_in)
+    return {
+        "graph_token": token_data["access_token"],
+        "expires_at": str(expires_at),
+        "refresh_token": token_data["refresh_token"],
+    }
 
 class CustomEntraIdOAuthProvider(AzureADOAuthProvider):
     def __init__(self):
@@ -33,7 +88,7 @@ class CustomEntraIdOAuthProvider(AzureADOAuthProvider):
         self.client_id = CLIENT_ID
         self.client_secret = CLIENT_SECRET
         self.authorize_params = {
-            "tenant": TENANT_ID,
+            "tenant": os.getenv("OAUTH_AZURE_AD_TENANT_ID"),
             "response_type": "code",
             "scope": SCOPE,     #Device.Read.All offline_access
             "response_mode": "query",
@@ -70,10 +125,11 @@ class CustomEntraIdOAuthProvider(AzureADOAuthProvider):
             url=DATA_GRAPH_GROUP_MEMBERSHIP_ENDPOINT,
             # url=DATA_GRAPH_RUNSCRIPT_ENDPOINT.format(graph_script_name="MeGroups"),
             headers=headers,
+            json={},
         )
 
         user_info = await call_api(
-            DATA_GRAPH_RUNSCRIPT_ENDPOINT.format(graph_script_name="MeWithAppRoles"), headers=headers, json={}
+            url=DATA_GRAPH_RUNSCRIPT_ENDPOINT.format(graph_script_name="MeWithAppRoles"), headers=headers, json={}
         )
 
         #Get groups
@@ -105,7 +161,7 @@ class CustomEntraIdOAuthProvider(AzureADOAuthProvider):
         if len(role_ids) <= 0:
             raise HTTPException(status_code=401, detail="User does not have access to the application")
         
-        log_entry = await get_table(table="TermsOfUse", params={"PartitionKey": "user", "RowKey": user_info["id"]})
+        log_entry = await get_log(table="TermsOfUse", params={"PartitionKey": "user", "RowKey": user_info["id"]})
         # logger.info(user_info["id"])
         # logger.info(log_entry)
         if log_entry is None or len(log_entry) == 0:

@@ -1,62 +1,163 @@
-"""Main application file.
-To run this local do: "cd web/sia-web && clear && python -m chainlit run app.py --port 8001 -w -d"
-"""
+#python -m chainlit run app.py --port 8080
 
 import os
 import sys
-import uuid
+from datetime import UTC, datetime
 
+from helper import get_log, write_log
 import chainlit as cl
 from loguru import logger
+import chainlit.data as cl_data
 
-from helper.constants import AUTHOR
-
+from helper.static import AUTHOR
+from components.auth import (
+    CustomEntraIdOAuthProvider,
+    refresh_token,
+    get_token_by_refresh_token,
+)
+from components.message import handle_user_message, handle_debug_commands
 from chainlit.oauth_providers import providers
 
-import components
-from components.auth import CustomEntraIdOAuthProvider
+#from components.data import CustomDataLayer
+from components.chat_profiles import create_chat_profiles
 
-LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
 
 logger.remove()
+LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
 logger.add(
     sys.stdout,
     level=LOGGING_LEVEL,
-    colorize=True,
 )
+now = datetime.now(UTC).isoformat()
 
 providers[2] = CustomEntraIdOAuthProvider()
+# cl_data._data_layer = CustomDataLayer()
 
 @cl.oauth_callback
 async def oauth_callback(
     provider_id: str,
-    token: str,     #this token is valid graph token
+    token,
     raw_user_data: dict[str, str],
-    default_user: cl.User,
-    redirected_uri: str | None = None,
+    default_app_user: cl.User,
 ) -> cl.User | None:
-    """Handle OAuth callback."""
-    logger.info(token)
+    """Callback function for the OAuth provider."""
+    logger.info("Authentication on EntraId")
+    default_app_user.metadata["username"] = raw_user_data["displayName"]
+    import uuid
 
-    logger.trace(default_user.metadata)
+    default_app_user.id = str(uuid.uuid4())
+    #await cl_data._data_layer.create_user(default_app_user)
 
-    #1. This works
-    #del default_user.metadata["image"]
-    #default_user.metadata["token"] = token
+    logger.trace(default_app_user)
+    return default_app_user
 
-    #2. This does not work = unauthorized in terminal and blank browser
-    #default_user.metadata["token"] = token
+@cl.set_chat_profiles
+async def chat_profile(user: cl.User):
+    """Creates chat profiles based on the user's app roles."""
+    logger.info("Creating chat profiles")
+    #Refresh if necessary
+    logger.trace(user)
+    refresh_token = user.metadata.get("refresh_token")
+    updated_token = await get_token_by_refresh_token(refresh_token)
+    user.metadata.update(updated_token)
+    return create_chat_profiles(user)
 
-    #3. This results in an error:
-    #cl.user_session.set("token", token)
+async def check_terms_of_use() -> bool:
+    """Check if the user has accepted the terms of use."""
+    user = cl.user_session.get("user")
+    metadata = user.metadata
+    assert user.metadata, f"metadata is empty {user}"
+    log_entry = await get_log(table="TermsOfUse", params={"PartitionKey": "user", "RowKey": metadata["aad_id"]})
 
-    default_user.display_name = raw_user_data["displayName"]
-    default_user.metadata["sessionId"] = str(uuid.uuid4())
+    return log_entry is not None and len(log_entry["data"]) > 0
 
-    return default_user
+@cl.action_callback("Accept")
+async def on_action(action):
+    """Callback function for the action to accept the terms of use."""
+    user = cl.user_session.get("user")
+
+    log_entry = await write_log(
+        table="TermsOfUse",
+        body = {
+            "PartitionKey": "user",
+            "RowKey": user.metadata["aad_id"],
+            "Accepted": "True",
+            "AcceptedAt": str(datetime.now(UTC)),
+            "Platform": "chainlit",
+        },
+    )
+    if log_entry is False:
+        await cl.Message(
+            content="We are experiencing some technical problems. Please contact us.",
+            #type="user_message",
+            #disable_feedback=True,
+            author=AUTHOR,
+        ).send()
+    else:
+        cl.user_session.set("terms_of_use", True)
+        await cl.Message(
+            content="Terms of use are accepted.",
+            #type="user_message",
+            #disable_feedback=True,
+            author=AUTHOR
+        ).send()
+        await action.remove()
+
+@cl.on_chat_start
+async def on_chat_start():
+    """Function to handle the start of the chat."""
+    logger.info("Chat started called")
+
+    start_time = datetime.now(UTC)
+    cl.user_session.set("startTime", str(start_time))
+    cl.user_session.set("message_history", [])
+
+    #Write session in log
+    user = cl.user_session.get("user")
+    user_data = user.metadata
+    assert user_data, f"metadata is empty {user}"
+    if not user_data.get("terms_of_use", False):
+        try:
+            has_accepted = await check_terms_of_use()
+            cl.user_session.set("terms_of_use", has_accepted)
+
+            if not has_accepted:
+                await cl.Message(
+                    content="Read and accept the terms of use. You can find them here:---",
+                    actions=[cl.Action(name="Accept", value="accept", description="Accept the Terms of Use")],
+                    #type = "user_message",
+                    #disable_feedback = True,
+                    author=AUTHOR
+                ).send()
+        except Exception as e:
+            logger.error(f"Error writing tou message: {e}")
+            await cl.Message(
+                content="We are experiencing some technical problems. Please contact us.",
+                author=AUTHOR,
+            ).send()
+
+            cl.user_session.set("terms_of_use", False)
+            if __debug__ is True:
+                raise
+
+logger.info("Chat start was successful")
+
+@cl.set_starters
+async def set_starters():
+    """Set the starters for the chat."""
+    return [
+        cl.Starter(
+            label="Gives you an overview of the SIA features.", message="What can you do", icon="/public/idea.svg"
+        ),
+        cl.Starter(
+            label="Generates an answer from the BASF knowledge base.",
+            message="How to reset my password?",
+            icon="/public/password.svg",
+        ),
+    ]
 
 @cl.on_message
-async def main(message: cl.Message):
+async def on_message(message: cl.Message):
     """Handle user message."""
 
     logger.trace(message.content)
