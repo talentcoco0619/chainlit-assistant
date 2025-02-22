@@ -1,4 +1,4 @@
-__version__ = "3.6.1"
+__version__ = "4.0.0.dev2"
 __project_name__ = "sia-web"
 
 __author__ = "Fabian Peschke/Jannik Reinhard"

@@ -158,30 +158,47 @@ async def set_starters():
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    """Handle user message."""
+    """Main function to handle incoming messages from the user."""
+    logger.info("Received message from the user")
 
-    logger.trace(message.content)
+    user = cl.user_session.get("user")
+    meta_data = user.metadata
+    logger.debug(f"tou: {meta_data.get('terms_of_use')}")
 
-    user:cl.User | None = cl.user_session.get("user", None)
-    logger.trace(user)
-    if user is None:
-        msg = "User not found in session."
-        raise ValueError(msg)
-    
-    user_token: str = user.metadata["graph_token"]
+    if meta_data.get("terms_of_use", False) is False and await check_terms_of_use() is False:
+        logger.warning("User has not accepted the terms of use")
+        await cl.Message(
+            content="You have not accepted our terms of use yet. Please accept the terms of use first. If you don't see them please logout and in again. Thank you !",
+            author=AUTHOR,
+            # type="user_message",
+            # disable_feedback=True,
+        ).send()
+        return
 
+    # settings = cl.user_session.get("settings")
 
-    #user_token: str | None = cl.user_session.get("http_cookie")
-    #user_token: str | None = TOKEN_MAP.get(user.identifier)
+    _refresh_token = meta_data.get("refresh_token", "Empty")
+    graph_token = meta_data.get("graph_token", "Empty")
+    token_expires = meta_data.get("expires_at", "Empty")
 
-    logger.debug(user_token)
-    if not user_token:
-        await cl.Message(content="User token not found in session.", author=AUTHOR).send()
-        raise ValueError("User token not found in session.")
-    
-    if message.content.startswith("/"):
-        stop = await components.handle_commands(message, user, user_token)
-        if stop is True:
-            return
-        
-    await components.handle_message(message, user, user_token)
+    logger.trace(f"Token: {graph_token}")
+    logger.trace(f"Refresh Token: {_refresh_token}")
+    token = await refresh_token(token=graph_token, token_expires=token_expires, refresh_token=refresh_token)
+    user.metadata.update(token)
+
+    # Handle debug commands
+    if __debug__ is True and message.content.startswith("/"):
+        logger.info("Handling debug commands")
+        await handle_debug_commands(message, user)
+    else:
+        logger.info("Handling user message")
+        await handle_user_message(message, user)
+
+@cl.on_chat_resume
+async def on_chat_resume(thread: cl_data.ThreadDict):
+    """Function to handle the resume of the chat."""
+    await cl.Message(f"Welcome back to {thread['name']}").send()
+    if "metadata" in thread:
+        await cl.Message(thread["metadata"], author="metadata", language="json").send()
+    if "tags" in thread:
+        await cl.Message(thread["tags"], author="tags", language="json").send()
