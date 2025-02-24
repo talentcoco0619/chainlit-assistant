@@ -95,4 +95,39 @@ class CustomDataLayer(cl_data.BaseDataLayer):
             }
 
     async def delete_thread(self, thread_id: str) -> bool:
-        
+        logger.debug("DELETE THREAD CALLED")
+
+        if thread_id in self.threads:
+            del self.threads[thread_id]
+            return True
+        return False
+    
+    @cl_data.queue_until_user_message()
+    async def create_step(self, step_dict: StepDict) -> None:
+        logger.debug("CREATE STEP CALLED")
+        logger.trace(step_dict)
+        logger.trace(self.threads)
+
+        thread_id = step_dict.get("threadId")
+        thread = self.threads.get(thread_id)
+
+        if thread:
+            logger.trace(thread)
+            step = {
+                "id": step_dict.get("id"),
+                "name": step_dict.get("name"),
+                "createdAt": step_dict.get("createdAt"),
+                "type": step_dict.get("type"),
+                "output": step_dict.get("output"),
+            }
+            self.threads[thread_id]["steps"].append(step)
+            logger.trace(self.threads[thread_id])
+        else:
+            await self.update_thread(
+                thread_id,
+                name="New Thread",
+                user_id=step_dict.get("name"),
+                metadata=step_dict.get("metadata", {}),
+                tags=step_dict.get("metadata", []),
+                
+            )
