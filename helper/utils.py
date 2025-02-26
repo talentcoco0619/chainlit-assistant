@@ -18,7 +18,7 @@ DATA_BLOB_TABLE_ENDPOINT = f"{DATA_BLOB_BASE_URI}/table" + "/{table_name}"
 
 DATA_GRAPH_BASE_URI = "http://data-graph/v1"
 DATA_GRAPH_RUN_ENDPOINT = f"{DATA_GRAPH_BASE_URI}/run"
-DATA_GRAPH_RUNDSCRIPT_ENDPOINT = f"{DATA_GRAPH_RUN_ENDPOINT}" + "/{graph_script_name}"
+DATA_GRAPH_RUNSCRIPT_ENDPOINT = f"{DATA_GRAPH_RUN_ENDPOINT}" + "/{graph_script_name}"
 DATA_GRAPH_GROUP_MEMBERSHIP_ENDPOINT = f"{DATA_GRAPH_BASE_URI}/groupMembership"
 
 def format_elapsed_time(total_seconds) -> str:
@@ -65,7 +65,7 @@ async def read_json(path: str) -> dict:
         data =  json.loads(content)
     return data
 
-async def stream_ndjson(response) -> AsyncGenerator[dict: None]:
+async def stream_ndjson(response) -> AsyncGenerator[dict, None]:
     """Stream and process NDJSON data from the response.
     
     Args:
@@ -90,7 +90,7 @@ async def call_api(url: str, headers: dict | None = None, timeout: int = 100, me
     logger.info(f"Calling API: {url}")
     async with ClientSession(trust_env=True) as session:
         if method == "POST":
-            async with session.post(url=url, timneout=timeout, headers=headers, **kwargs) as response:
+            async with session.post(url=url, timeout=timeout, headers=headers, **kwargs) as response:
                 logger.info("Run POST")
                 if response.status == 401:
                     text = await response.text()
