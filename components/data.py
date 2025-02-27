@@ -4,13 +4,12 @@ from helper import write_log
 from loguru import logger
 import chainlit as cl
 import chainlit.data as cl_data
-from chainlit.core import BaseDataLayer
 from chainlit.step import StepDict
 from chainlit.types import Feedback, PageInfo, ThreadDict, PaginatedResponse
 
 DEFAULT_THREADS = {}
 
-class CustomDataLayer(BaseDataLayer):
+class CustomDataLayer(cl_data.BaseDataLayer):
     def __init__(self):
         self.feedbacks = []
         self.users = {"id": None}

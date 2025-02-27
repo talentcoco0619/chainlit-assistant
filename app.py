@@ -34,23 +34,23 @@ now = datetime.now(UTC).isoformat()
 providers[2] = CustomEntraIdOAuthProvider()
 # cl_data._data_layer = CustomDataLayer()
 
-# @cl.oauth_callback
-# async def oauth_callback(
-#     provider_id: str,
-#     token,
-#     raw_user_data: dict[str, str],
-#     default_app_user: cl.User,
-# ) -> cl.User | None:
-#     """Callback function for the OAuth provider."""
-#     logger.info("Authentication on EntraId")
-#     default_app_user.metadata["username"] = raw_user_data["displayName"]
-#     import uuid
+@cl.oauth_callback
+async def oauth_callback(
+    provider_id: str,
+    token,
+    raw_user_data: dict[str, str],
+    default_app_user: cl.User,
+) -> cl.User | None:
+    """Callback function for the OAuth provider."""
+    logger.info("Authentication on EntraId")
+    default_app_user.metadata["username"] = raw_user_data["displayName"]
+    import uuid
 
-#     default_app_user.id = str(uuid.uuid4())
-#     #await cl_data._data_layer.create_user(default_app_user)
+    default_app_user.id = str(uuid.uuid4())
+    #await cl_data._data_layer.create_user(default_app_user)
 
-#     logger.trace(default_app_user)
-#     return default_app_user
+    logger.trace(default_app_user)
+    return default_app_user
 
 @cl.set_chat_profiles
 async def chat_profile(user: cl.User):
