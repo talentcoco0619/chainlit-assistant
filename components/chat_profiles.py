@@ -6,7 +6,7 @@ def create_chat_profiles(user: cl.User):
         return [
             cl.ChatProfile(name="End Users", markdown_description="This mode gives answers for IT users", icon="")
         ]
-    elif "servicedesk" in app_roles:
+    elif "serviceDesk" in app_roles:
         return [
             cl.ChatProfile(name="End Users", markdown_description="This mode gives answers for IT users", icon=""),
             cl.ChatProfile(
