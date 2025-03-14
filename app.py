@@ -1,42 +1,48 @@
-# import chainlit as cl
-
-# async def get_ticket():
-#     """Pretending to fetch data from linear"""
-#     return {
-#         "title": "Fix Authentication Bug",
-#         "status": "in-progress",
-#         "assignee": "Sarah Chen",
-#         "deadline": "2025-01-15",
-#         "tags": ["security", "high-priority", "backend"]
-#     }
-
-# @cl.on_message
-# async def on_message(msg: cl.Message):
-#     # Let's pretend the user is asking about a linear ticket.
-#     # Usually an LLM with tool calling would be used to decide to render the component or not.
-    
-#     props = await get_ticket()
-    
-#     ticket_element = cl.CustomElement(name="LinearTicket", props=props)
-#     # Store the element if we want to update it server side at a later stage.
-#     cl.user_session.set("ticket_el", ticket_element)
-    
-#     await cl.Message(content="Here is the ticket information!", elements=[ticket_element]).send()
-
 import chainlit as cl
+from loguru import logger
+from components.handlers.terms_of_use_handler import has_user_accepted_terms_of_use, handle_terms_of_use_check
+
+@cl.action_callback("terms_of_use_action")
+async def on_action(action:cl.Action):
+    print("Received action:", action.name)
+    await cl.Message(content="Welcome! How can I help you today?").send()
 
 
 @cl.on_chat_start
-async def main():
-    res = await cl.AskActionMessage(
-        content="Pick an action!",
-        actions=[
-            cl.Action(name="continue", payload={"value": "continue"}, label="✅ Continue"),
-            cl.Action(name="cancel", payload={"value": "cancel"}, label="❌ Cancel"),
-        ],
-    ).send()
+async def start():
+    # Check Terms of Use Acceptance
+    logger.info('Checking if user has accepted terms of use')
+    has_accepted = await has_user_accepted_terms_of_use()
 
-    if res and res.get("payload").get("value") == "continue":
+
+    if not has_accepted:
+        #send Terms of Use card
+        card = cl.CustomElement(name="termsOfUse")
+
         await cl.Message(
-            content="Continue!",
+            content="Please accept the Terms of Use to continue.",
+            elements=[card]
         ).send()
+        return
+    
+    logger.info('User has accepted Terms of Use')
+    await cl.Message(content="Welcome! How can I help you today?").send()
+
+@cl.on_message
+async def main(message: cl.Message):
+    # Check Terms of Use Acceptance
+    logger.info('Checking if user has accepted terms of use')
+    has_accepted = await has_user_accepted_terms_of_use()
+
+    if not has_accepted:
+        #send Terms of Use card
+        card = cl.CustomElement(name="termsOfUse")
+
+        await cl.Message(
+            content="Please accept the Terms of Use to continue.",
+            elements=[card]
+        ).send()
+        return
+    
+    response = f"Received: {message}"
+    await cl.Message(response).send()
