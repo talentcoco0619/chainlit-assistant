@@ -5,8 +5,52 @@ from components.handlers.terms_of_use_handler import has_user_accepted_terms_of_
 @cl.action_callback("terms_of_use_action")
 async def on_action(action:cl.Action):
     print("Received action:", action.name)
-    await cl.Message(content="Welcome! How can I help you today?").send()
 
+    # Handle Terms of Use acceptance.
+
+    user: cl.User | None = cl.user_session.get("user")
+    if not user:
+        await cl.Message(content="User not found in session.").send()
+        return
+    
+    success = await handle_terms_of_use_check(user)
+
+    if success:
+        await cl.Message(content="Welcome! How can I help you today?").send()
+
+@cl.action_callback("restart_sia_action")
+async def on_action(action: cl.Action):
+    print("Received action:", action.name)
+    # Handle Restart SIA
+    await cl.Message(content="--- New SIA chat ---").send()
+
+@cl.action_callback("positive_feedback_action")
+async def on_action(action: cl.Action):
+    logger.info("Received action:", action.name)
+
+    user: cl.User | None = cl.user_session.get("user")
+    if not user:
+        await cl.Message(content="User not found in session.").send()
+        return
+
+    user_token: str = user.metadata["refresh_token"]
+
+    # Handle Positive Feedback
+    await handle_positive_feedback(user, user_token)
+
+@cl.action_callback("negative_feedback_action")
+async def on_action(action: cl.Action):
+    logger.info("Received action:", action.name)
+
+    user: cl.User | None = cl.user_session.get("user")
+    if not user:
+        await cl.Message(content="User not found in session.").send()
+        return
+
+    user_token: str = user.metadata["refresh_token"]
+
+    # Handle Negative Feedback
+    await handle_negative_feedback(user, user_token)    
 
 @cl.on_chat_start
 async def start():
