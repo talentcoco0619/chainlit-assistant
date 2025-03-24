@@ -1,0 +1,73 @@
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "TextBlock",
+            "size": "Medium",
+            "weight": "Bolder",
+            "text": "Thanks for your feedback."
+        },
+        {
+            "type": "TextBlock",
+            "text": "Sorry to hear that. Help us to improve our service by giving us a comment.",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
+            "text": "What went wrong?",
+            "wrap": true,
+            "weight": "Bolder"
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "Input.Toggle",
+                            "title": "Bad Quality",
+                            "id": "badQuality"
+                        },
+                        {
+                            "type": "Input.Toggle",
+                            "title": "Incorrect Response",
+                            "id": "incorrectResponse"
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "Input.Toggle",
+                            "title": "Technical Error",
+                            "id": "technicalError"
+                        },
+                        {
+                            "type": "Input.Toggle",
+                            "title": "Misunderstood",
+                            "id": "misunderstood"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ActionSet",
+            "actions": [
+                {
+                    "type": "Action.Submit",
+                    "title": "Submit",
+                    "data": {
+                        "id": "feedbackTextSubmit",
+                        "action": "feedback_text"
+                    }
+                }
+            ],
+            "spacing": "Medium"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.5"
+}
