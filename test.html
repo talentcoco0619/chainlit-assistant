@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Cards Demo</title>
+    <!-- Load Adaptive Cards JS from CDN -->
+    <script src="https://unpkg.com/adaptivecards/dist/adaptivecards.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card-container {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #106ebe;
+        }
+    </style>
+</head>
+<body>
+    <h1>Adaptive Cards JavaScript Demo</h1>
+    
+    <div>
+        <button onclick="renderInputCard()">Render Input Card</button>
+    </div>
+    
+    <div id="card-container" class="card-container">
+        <!-- Cards will be rendered here -->
+        <p>Click a button above to render a card.</p>
+    </div>
+
+    <script>
+        // Initialize AdaptiveCards
+        const adaptiveCards = new AdaptiveCards.AdaptiveCard();
+        
+        // Set up host config (optional)
+        adaptiveCards.hostConfig = new AdaptiveCards.HostConfig({
+            fontFamily: "Segoe UI, Helvetica Neue, sans-serif"
+        });
+        
+        
+        // Input card JSON
+        const inputCard = {
+            "type": "AdaptiveCard",
+            "version": "1.2",
+            "body": [
+                {
+                    "type": "TextBlock",
+                    "text": "Feedback Form",
+                    "size": "Medium",
+                    "weight": "Bolder"
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "name",
+                    "placeholder": "Enter your name",
+                    "label": "Name"
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "feedback",
+                    "placeholder": "Enter your feedback",
+                    "label": "Feedback",
+                    "isMultiline": true
+                },
+                {
+                    "type": "Input.ChoiceSet",
+                    "id": "rating",
+                    "label": "Rating",
+                    "choices": [
+                        { "title": "Excellent", "value": "5" },
+                        { "title": "Good", "value": "4" },
+                        { "title": "Average", "value": "3" },
+                        { "title": "Poor", "value": "2" },
+                        { "title": "Terrible", "value": "1" }
+                    ],
+                    "value": "3"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Action.Submit",
+                    "title": "Submit",
+                    "data": {
+                        "form": "feedback"
+                    }
+                }
+            ]
+        };
+        
+        // Function to render the input card
+        function renderInputCard() {
+            const cardContainer = document.getElementById('card-container');
+            
+            // Parse the card
+            const card = new AdaptiveCards.AdaptiveCard();
+            card.parse(inputCard);
+            
+            // Set up event handlers
+            card.onExecuteAction = function(action) {
+                if (action instanceof AdaptiveCards.SubmitAction) {
+                    const inputs = card.getAllInputs();
+                    alert('Form submitted!\n\n' + 
+                          JSON.stringify(inputs, null, 2));
+                }
+            };
+            
+            // Render the card
+            cardContainer.innerHTML = '';
+            card.render(cardContainer);
+        }
+    </script>
+</body>
+</html>
