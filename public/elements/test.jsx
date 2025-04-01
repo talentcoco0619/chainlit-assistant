@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function feedbackText() {
+export default function test() {
   const [checkboxes, setCheckboxes] = React.useState({
     "bad-quality": false,
     "technical-error": false,
@@ -43,50 +43,44 @@ export default function feedbackText() {
             Sorry to hear that. Help us to improve our service by giving us a
             comment.
           </p>
+          <p className="text-md">What went wrong?</p>
+          <div className="inline-grid grid grid-cols-2 grid-row-2 gap-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="bad-quality"
+                checked={checkboxes["bad-quality"]}
+                onCheckedChange={() => handleCheckboxChange("bad-quality")}
+              />
+              <label htmlFor="bad-quality">Bad quality</label>
+            </div>
 
-          <div className="space-y-2">
-            <p className="font-medium">What went wrong?</p>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="technical-error"
+                checked={checkboxes["technical-error"]}
+                onCheckedChange={() => handleCheckboxChange("technical-error")}
+              />
+              <label htmlFor="technical-error">Technical error</label>
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="bad-quality"
-                  checked={checkboxes["bad-quality"]}
-                  onCheckedChange={() => handleCheckboxChange("bad-quality")}
-                />
-                <label htmlFor="bad-quality">Bad quality</label>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="incorrect-response"
+                checked={checkboxes["incorrect-response"]}
+                onCheckedChange={() =>
+                  handleCheckboxChange("incorrect-response")
+                }
+              />
+              <label htmlFor="incorrect-response">Incorrect response</label>
+            </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="technical-error"
-                  checked={checkboxes["technical-error"]}
-                  onCheckedChange={() =>
-                    handleCheckboxChange("technical-error")
-                  }
-                />
-                <label htmlFor="technical-error">Technical error</label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="incorrect-response"
-                  checked={checkboxes["incorrect-response"]}
-                  onCheckedChange={() =>
-                    handleCheckboxChange("incorrect-response")
-                  }
-                />
-                <label htmlFor="incorrect-response">Incorrect response</label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="misunderstood"
-                  checked={checkboxes["misunderstood"]}
-                  onCheckedChange={() => handleCheckboxChange("misunderstood")}
-                />
-                <label htmlFor="misunderstood">Misunderstood</label>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="misunderstood"
+                checked={checkboxes["misunderstood"]}
+                onCheckedChange={() => handleCheckboxChange("misunderstood")}
+              />
+              <label htmlFor="misunderstood">Misunderstood</label>
             </div>
           </div>
 

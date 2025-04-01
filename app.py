@@ -1,10 +1,22 @@
 import chainlit as cl
+from loguru import logger
+import os
+from components.handlers.feedback_handler import handle_feedback_comment
 
-@cl.on_message
-async def main():
-    html_content = """
-    <p id="content">This is <b>HTML</b> content!</p>
-    <script src="https://unpkg.com/adaptivecards/dist/adaptivecards.js"></script>
-"""
-    await cl.Message(content=html_content).send()
+@cl.action_callback("feedback_text_action")
+async def on_action(action: cl.Action):
 
+    logger.info("Received action:", action.name)
+
+    await handle_feedback_comment()
+
+
+@cl.on_chat_start
+async def start():
+
+    card = cl.CustomElement(name="dropdown")
+
+    await cl.Message(
+        content="Here is the form.",
+        elements=[card]
+    ).send()

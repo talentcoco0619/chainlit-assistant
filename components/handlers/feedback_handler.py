@@ -1,6 +1,4 @@
 import chainlit as cl
-from helper.constants import SIA_FEEDBACK_URL
-from helper.web import call_api
 from loguru import logger
 
 async def handle_positive_feedback(user: cl.User, user_token: str):
@@ -61,3 +59,10 @@ async def handle_negative_feedback(user: cl.User, user_token: str):
     except Exception as e:
         logger.exception(f"Failed to send negative feedback: {e}")
         await cl.Message(content="Failed to send negative feedback").send()
+
+    
+
+async def handle_feedback_comment():
+
+    logger.info("Received feedback comment")
+    await cl.Message(content="Thanks for the comment. This helps us to improve the service!").send()
