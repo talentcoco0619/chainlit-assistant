@@ -46,7 +46,7 @@ def convert_to_jsx(json_data, func_name, indent_level=0):
     input_types = detect_input_types(json_data)
     
     # Conditionally include imports and functions
-    imports = ["import { Card, CardHeader, CardTitle, CardContent } from \"@/components/ui/card\";"]
+    imports = ["import { Card, CardContent } from \"@/components/ui/card\";"]
     functions = []
     if input_ids or 'Action.ShowCard' in action_types:
         imports.append("import { useState } from \"react\";")
@@ -62,9 +62,9 @@ def convert_to_jsx(json_data, func_name, indent_level=0):
     # Generate formData content based on whether there are inputs
     if input_ids and 'Action.Submit' in action_types:
         input_fields = ', '.join([f"'{id}': {id.replace('.', '_')}" for id in input_ids])
-        form_data_content = f"      {input_fields},\n      ...data"
+        data_content = f" name: data, payload: {{{input_fields}}}"
     else:
-        form_data_content = "      ...data" if 'Action.Submit' in action_types else ""
+        data_content = " name: data, payload: {}" if 'Action.Submit' in action_types else ""
 
     # Add state for showCards only if Action.ShowCard exists
     state_declarations = "  const [showCards, setShowCards] = useState({});\n" if 'Action.ShowCard' in action_types else ""
@@ -72,11 +72,9 @@ def convert_to_jsx(json_data, func_name, indent_level=0):
     # Add handleSubmit only if Action.Submit exists
     if 'Action.Submit' in action_types:
         functions.append(f"""  const handleSubmit = (data) => {{
-    const formData = {{
-{form_data_content}
-    }};
-    console.log("Submit action triggered with data:", formData);
+                         console.log("Button clicked.");
     // Add your submit logic here
+                         callAction({{{data_content}}})
   }};""")
 
     # Add handleOpenUrl only if Action.OpenUrl exists
@@ -187,13 +185,12 @@ def convert_text_block(data, indent_level):
     }
     weight_classes = {
         'bolder': 'font-bold',
-        'bold': 'azuje-semibold',
         'normal': 'font-normal'
     }
     
     size = size_classes.get(data.get('size', 'small').lower(), 'text-sm')
     weight = weight_classes.get(data.get('weight', 'normal').lower(), 'font-normal')
-    wrap = 'whitespace-pre-wrap' if data.get('wrap', False) else 'whitespace-nowrap'
+    wrap = 'text-wrap' if data.get('wrap', False) else ''
     
     return f'{indent}<p className="{size} {weight} {wrap} mb-2">{data.get("text", "")}</p>'
 
@@ -243,18 +240,20 @@ def convert_action(action, indent_level):
     action_id = action.get('id', action.get('title', action.get('type', 'action')).replace(' ', '_').lower())
     
     if action.get('type') == 'Action.Submit':
-        data_str = json.dumps(action.get('data', {}))
-        return f'{indent}<Button className="mt-2" onClick={{() => handleSubmit({data_str})}}>{action.get("title", "")}</Button>'
+        data = action.get('data', {})
+        data_id = data.get('id', '')
+        data_action = data.get('action', '')
+        return f'{indent}<Button className="mt-2" variant="outline" id="{data_id}" onClick={{() => handleSubmit("{data_action}_action")}}>{action.get("title", "")}</Button>'
     
     elif action.get('type') == 'Action.OpenUrl':
         url = action.get('url', '')
-        return f'{indent}<Button className="mt-2" onClick={{() => handleOpenUrl("{url}")}}>{action.get("title", "")}</Button>'
+        return f'{indent}<Button className="mt-2" variant="outline"  onClick={{() => handleOpenUrl("{url}")}}>{action.get("title", "")}</Button>'
     
     elif action.get('type') == 'Action.ShowCard':
         card_content = convert_adaptive_card_content(action['card'], indent_level + 1)
         if card_content is None:
             return None
-        return f"{indent}<div>\n{indent}<Button className=\"mt-2\" onClick={{() => toggleShowCard('{action_id}')}}>{action.get('title', '')}</Button>\n{indent}{{showCards['{action_id}'] && (\n{inner_indent}<Card className=\"max-w-md mt-2\">\n{inner_indent}  <CardContent> <br></br>\n{card_content}\n{inner_indent}  </CardContent>\n{inner_indent}</Card>\n{indent})}}\n{indent}</div>"
+        return f"{indent}<div>\n{indent}<Button className=\"mt-2\" variant=\"outline\" onClick={{() => toggleShowCard('{action_id}')}}>{action.get('title', '')}</Button>\n{indent}{{showCards['{action_id}'] && (\n{inner_indent}<Card className=\"max-w-md mt-2\">\n{inner_indent}  <CardContent> <br></br>\n{card_content}\n{inner_indent}  </CardContent>\n{inner_indent}</Card>\n{indent})}}\n{indent}</div>"
     
     return f"{indent}<!-- Unsupported action type: {action.get('type')} -->"
 
@@ -278,7 +277,7 @@ def main():
                 json_data = json.load(f)
 
             jsx_content = convert_to_jsx(json_data, base_filename)
-            output_filename = 'test.jsx'
+            output_filename = base_filename + '.jsx'
             with open(os.path.join(output_folder, output_filename), 'w') as f:
                 f.write(jsx_content)
 

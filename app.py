@@ -14,7 +14,7 @@ async def on_action(action: cl.Action):
 @cl.on_chat_start
 async def start():
 
-    card = cl.CustomElement(name="test1")
+    card = cl.CustomElement(name="test2")
 
     await cl.Message(
         content="Here is the form.",
