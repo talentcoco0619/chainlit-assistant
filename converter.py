@@ -277,8 +277,8 @@ def main():
                 json_data = json.load(f)
 
             jsx_content = convert_to_jsx(json_data, base_filename)
-            # output_filename = base_filename + '.jsx'
-            output_filename = 'test.jsx'
+            output_filename = base_filename + '.jsx'
+            # output_filename = 'test.jsx'
             with open(os.path.join(output_folder, output_filename), 'w') as f:
                 f.write(jsx_content)
 
