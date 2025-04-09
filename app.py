@@ -1,7 +1,5 @@
 import chainlit as cl
 from loguru import logger
-import os
-from components.handlers.feedback_handler import handle_feedback_comment
 
 @cl.action_callback("feedback_text_action")
 async def on_action(action: cl.Action):
