@@ -1,28 +1,28 @@
 {
-    "type": "AdaptiveCard",
-    "body": [],
-    "actions": [
-      {
-        "type": "Action.ShowCard",
-        "title": "Action.ShowCard",
-        "card": {
-          "type": "AdaptiveCard",
-          "body": [
-            {
-              "type": "TextBlock",
-              "size": "Medium",
-              "weight": "Bolder",
-              "text": "balabbal"
-            },
-            {
-              "type": "TextBlock",
-              "text": "balabala",
-              "wrap": true
-            }
-          ]
-        }
+  "type": "AdaptiveCard",
+  "body": [],
+  "actions": [
+    {
+      "type": "Action.ShowCard",
+      "title": "Action.ShowCard",
+      "card": {
+        "type": "AdaptiveCard",
+        "body": [
+          {
+            "type": "TextBlock",
+            "size": "Medium",
+            "weight": "Bolder",
+            "text": "balabbal"
+          },
+          {
+            "type": "TextBlock",
+            "text": "balabala",
+            "wrap": true
+          }
+        ]
       }
-    ],
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "version": "1.5"
-  }
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5"
+}

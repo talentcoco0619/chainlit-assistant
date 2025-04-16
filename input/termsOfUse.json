@@ -1,28 +1,28 @@
 {
-    "type": "AdaptiveCard",
-    "body": [
-      {
-        "type": "TextBlock",
-        "size": "Medium",
-        "weight": "Bolder",
-        "text": "Terms Of Use"
-      },
-      {
-        "type": "TextBlock",
-        "text": "Before you can send a message to SIA, read and accept the terms of use. You can find them here: [SIA-Terms-of-Use](https://service4you.intranet.basf.com/esc?id=kb_article&sysparm_article=KB0072965)",
-        "wrap": true
+  "type": "AdaptiveCard",
+  "body": [
+    {
+      "type": "TextBlock",
+      "size": "Medium",
+      "weight": "Bolder",
+      "text": "Terms Of Use"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Before you can send a message to SIA, read and accept the terms of use. You can find them here: [SIA-Terms-of-Use](https://service4you.intranet.basf.com/esc?id=kb_article&sysparm_article=KB0072965)",
+      "wrap": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "title": "Accept",
+      "data": {
+        "id": "terms_of_use",
+        "action": "terms_of_use"
       }
-    ],
-    "actions": [
-      {
-        "type": "Action.Submit",
-        "title": "Accept",
-        "data": {
-          "id": "terms_of_use",
-          "action": "terms_of_use"
-        }
-      }
-    ],
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "version": "1.5"
-  }
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5"
+}
