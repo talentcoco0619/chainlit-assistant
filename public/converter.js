@@ -29,8 +29,6 @@ function upgradeHtmlContent() {
   script.type = "text/javascript";
   script.src = "test.html"; // Assuming the script is in the same directory
 
-  // Append the script to the body or head
-  // document.body.appendChild(script);
   const contentElement = document.getElementById("content");
   if (contentElement) {
     contentElement.innerHTML = script;
