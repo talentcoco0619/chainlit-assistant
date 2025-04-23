@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function termsOfUse() {
   const handleSubmit = (data) => {
     console.log("Button clicked.");
-    // Add your submit logic here
+
     callAction({ name: data, payload: {} });
   };
 
