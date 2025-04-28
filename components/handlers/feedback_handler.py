@@ -52,7 +52,7 @@ async def handle_negative_feedback(user: cl.User, user_token: str):
     }
 
     try:
-        # await call_api(url=SIA_FEEDBACK_URL, headers=headers, json=payload)
+        await call_api(url=SIA_FEEDBACK_URL, headers=headers, json=payload)
 
         card = cl.CustomElement(name="feedbackText")
         await cl.Message(content="", elements=[card]).send()
