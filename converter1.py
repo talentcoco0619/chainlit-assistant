@@ -69,7 +69,6 @@ export default function FeedbackComponent() {{
                 for toggle in column['items']:
                     jsx_output += f"""
           <div className="flex items-center space-x-2">
-            <Checkbox id="{toggle['id']}" checked={{checkboxes['{toggle['id']}']}} onCheckedChange={() => handleCheckboxChange('{toggle['id']}')} />
             <label htmlFor="{toggle['id']}">{toggle['title']}</label>
           </div>
 """
