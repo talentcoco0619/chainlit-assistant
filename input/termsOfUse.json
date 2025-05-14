@@ -22,7 +22,8 @@
         "action": "terms_of_use"
       }
     }
-  ],
-  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-  "version": "1.5"
+  ]
+  // ],
+  // "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  // "version": "1.5"
 }
