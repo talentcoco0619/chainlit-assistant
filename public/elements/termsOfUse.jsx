@@ -1,12 +1,12 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function termsOfUse() {
   const handleAccept = () => {
-    console.log('Button clicked')
+    console.log("Button clicked");
 
-    callAction({ name: 'terms_of_use_action', payload: {} })
-  }
+    callAction({ name: "terms_of_use_action", payload: {} });
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -25,5 +25,5 @@ export default function termsOfUse() {
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }
