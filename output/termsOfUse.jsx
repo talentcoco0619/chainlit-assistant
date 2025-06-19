@@ -1,16 +1,16 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function termsOfUse() {
   const handleSubmit = (data) => {
-    console.log('Button clicked.')
+    console.log("Button clicked.");
 
-    callAction({ name: data, payload: {} })
-  }
+    callAction({ name: data, payload: {} });
+  };
 
   return (
     <Card className="max-w-md">
-      <br></br>{' '}
+      <br></br>{" "}
       <CardContent>
         <p className="text-base font-bold  mb-2">Terms Of Use</p>
         <p className="text-sm font-normal text-wrap mb-2">
@@ -22,11 +22,11 @@ export default function termsOfUse() {
           className="mt-2"
           variant="outline"
           id="terms_of_use"
-          onClick={() => handleSubmit('terms_of_use_action')}
+          onClick={() => handleSubmit("terms_of_use_action")}
         >
           Accept
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }
