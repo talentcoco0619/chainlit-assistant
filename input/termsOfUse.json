@@ -10,6 +10,7 @@
     {
       "type": "TextBlock",
       "text": "Before you can send a message to SIA, read and accept the terms of use. You can find them here: [SIA-Terms-of-Use](https://service4you.intranet.basf.com/esc?id=kb_article&sysparm_article=KB0072965)",
+      
       "wrap": true
     }
   ],
