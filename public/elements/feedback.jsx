@@ -12,10 +12,10 @@ export default function feedback() {
     callAction({ name: "positive_feedback_action", payload: {} });
   };
 
-  const negativeFeedback = () => {
-    console.log("Negative feedback");
-    callAction({ name: "negative_feedback_action", payload: {} });
-  };
+  // const negativeFeedback = () => {
+  //   console.log("Negative feedback");
+  //   callAction({ name: "negative_feedback_action", payload: {} });
+  // };
 
   return (
     <Card className="w-1/2 max-w-sm">
