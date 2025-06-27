@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 
 export default function termsOfUse() {
   const handleAccept = () => {
-    //Test Accept button
     console.log("Button clicked");
 
     callAction({ name: "terms_of_use_action", payload: {} });
