@@ -41,17 +41,3 @@ Learn how to integrate your Autogen agents with Chainlit.
 
 Was this page helpful?
 
-
-Yes
-
-No
-Suggest edits
-Raise issue
-Installation
-github
-discord
-x
-linkedin
-Powered by Mintlify
-On this page
-Key features
