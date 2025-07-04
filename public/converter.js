@@ -25,12 +25,12 @@ document.addEventListener("DOMContentLoaded", function () {
 function upgradeHtmlContent() {
   alert("fsdd");
   // Create a script element
-  // const script = document.createElement("script");
-  // script.type = "text/javascript";
-  // script.src = "test.html"; // Assuming the script is in the same directory
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.src = "test.html"; // Assuming the script is in the same directory
 
-  // const contentElement = document.getElementById("content");
-  // if (contentElement) {
-  //   contentElement.innerHTML = script;
-  // }
+  const contentElement = document.getElementById("content");
+  if (contentElement) {
+    contentElement.innerHTML = script;
+  }
 }
