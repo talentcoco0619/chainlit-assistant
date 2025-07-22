@@ -27,7 +27,9 @@ export default function feedbackText() {
                 {" "}
                 <br></br>
                 <p className="text-base font-bold  mb-2">Test message</p>
-                <p className="text-sm font-normal text-wrap mb-2">Test content</p>
+                <p className="text-sm font-normal text-wrap mb-2">
+                  Test content
+                </p>
               </CardContent>
             </Card>
           )}
