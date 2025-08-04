@@ -2,20 +2,20 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function feedback() {
-  // const restartSia = () => {
-  //   console.log("Restarting SIA");
-  //   callAction({ name: "restart_sia_action", payload: {} });
-  // };
+  const restartSia = () => {
+    console.log("Restarting SIA");
+    callAction({ name: "restart_sia_action", payload: {} });
+  };
 
-  // const positiveFeedback = () => {
-  //   console.log("Positive feedback");
-  //   callAction({ name: "positive_feedback_action", payload: {} });
-  // };
+  const positiveFeedback = () => {
+    console.log("Positive feedback");
+    callAction({ name: "positive_feedback_action", payload: {} });
+  };
 
-  // const negativeFeedback = () => {
-  //   console.log("Negative feedback");
-  //   callAction({ name: "negative_feedback_action", payload: {} });
-  // };
+  const negativeFeedback = () => {
+    console.log("Negative feedback");
+    callAction({ name: "negative_feedback_action", payload: {} });
+  };
 
   return (
     <Card className="w-1/2 max-w-sm">
