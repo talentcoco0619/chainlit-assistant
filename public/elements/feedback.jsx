@@ -26,8 +26,8 @@ export default function feedback() {
       </CardHeader>
       <CardContent className="space-x-2">
         <Button id="restart_sia" variant="outline" onClick={restartSia}>
-          🔄 - New SIA chat
-          {/* <span className="text-xs">New SIA chat</span> */}
+          {/* 🔄 - New SIA chat */}
+          <span className="text-xs">New SIA chat</span>
         </Button>
         <Button
           id="positive_feedback"
