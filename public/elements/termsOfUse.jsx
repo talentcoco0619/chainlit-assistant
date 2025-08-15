@@ -19,9 +19,9 @@ export default function termsOfUse() {
         <div className="space-y-4">
           Before you can send a message to SIA, read and accept the terms of
           use. You can find them here:{" "}
-          {/* <a href="https://test.com/test" target="_blank">
+          <a href="https://test.com/test" target="_blank">
             SIA-Terms-Of-Use
-          </a> */}
+          </a>
         </div>
         <Button id="terms_of_use" variant="outline" onClick={handleAccept}>
           Accept
