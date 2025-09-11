@@ -1,5 +1,2 @@
-
-
-
 chainlit==2.4.1
 botbuilder-core==4.16.2
