@@ -4,7 +4,11 @@ export default function SimpleToggleContent() {
   const [isContentVisible, setIsContentVisible] = useState(false);
 
   const toggleContent = () => {
-    setIsContentVisible(!isContentVisible);
+    try {
+      setIsContentVisible(!isContentVisible);
+    } catch (error) {
+      console.error("Failed to toggle content visibility", error);
+    }
   };
 
   return (
@@ -23,10 +27,18 @@ export default function SimpleToggleContent() {
 export function ToggleSection({ title = "Section", defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
 
+  const handleToggle = () => {
+    try {
+      setOpen(!open);
+    } catch (error) {
+      console.error("Failed to toggle section", error);
+    }
+  };
+
   return (
     <div style={{ border: "1px solid #e5e7eb", borderRadius: 6, marginTop: 8 }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={handleToggle}
         style={{
           width: "100%",
           textAlign: "left",
@@ -50,7 +62,11 @@ export function Accordion({ items = [], defaultOpenIndex = -1 }) {
   const [openIndex, setOpenIndex] = useState(defaultOpenIndex);
 
   const onToggle = (idx) => {
-    setOpenIndex((curr) => (curr === idx ? -1 : idx));
+    try {
+      setOpenIndex((curr) => (curr === idx ? -1 : idx));
+    } catch (error) {
+      console.error("Failed to toggle accordion item", { index: idx, error });
+    }
   };
 
   return (
@@ -100,9 +116,13 @@ export function SimpleSelect({
   const [internal, setInternal] = useState(value ?? "");
 
   const handleChange = (e) => {
-    const v = e.target.value;
-    if (onChange) onChange(v);
-    setInternal(v);
+    try {
+      const v = e.target.value;
+      if (onChange) onChange(v);
+      setInternal(v);
+    } catch (error) {
+      console.error("Failed to handle select change", error);
+    }
   };
 
   const current = value !== undefined ? value : internal;
