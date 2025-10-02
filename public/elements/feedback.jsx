@@ -2,19 +2,31 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function feedback() {
-  const restartSia = () => {
-    console.log("Restarting SIA");
-    callAction({ name: "restart_sia_action", payload: {} });
+  const restartSia = async () => {
+    try {
+      console.log("Restarting SIA");
+      await callAction({ name: "restart_sia_action", payload: {} });
+    } catch (error) {
+      console.error("Failed to restart SIA:", error);
+    }
   };
 
-  const positiveFeedback = () => {
-    console.log("Positive feedback");
-    callAction({ name: "positive_feedback_action", payload: {} });
+  const positiveFeedback = async () => {
+    try {
+      console.log("Positive feedback");
+      await callAction({ name: "positive_feedback_action", payload: {} });
+    } catch (error) {
+      console.error("Failed to send positive feedback:", error);
+    }
   };
 
-  const negativeFeedback = () => {
-    console.log("Negative feedback");
-    callAction({ name: "negative_feedback_action", payload: {} });
+  const negativeFeedback = async () => {
+    try {
+      console.log("Negative feedback");
+      await callAction({ name: "negative_feedback_action", payload: {} });
+    } catch (error) {
+      console.error("Failed to send negative feedback:", error);
+    }
   };
 
   return (
