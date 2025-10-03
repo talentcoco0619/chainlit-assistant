@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ExternalLink } from "lucide-react";
 
 export default function termsOfUse() {
-  const handleAccept = () => {
-    console.log("Button clicked");
-
-    callAction({ name: "terms_of_use_action", payload: {} });
+  const handleAccept = async () => {
+    try {
+      console.log("Button clicked");
+      await callAction({ name: "terms_of_use_action", payload: {} });
+    } catch (error) {
+      console.error("Failed to accept terms of use:", error);
+    }
   };
 
   return (
