@@ -7,14 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const config = { childList: true, subtree: true };
 
   const callback = function (mutationsList, observer) {
-    for (const mutation of mutationsList) {
-      if (mutation.type === "childList") {
-        const contentElement = document.getElementById("content");
-        if (contentElement) {
-          upgradeHtmlContent();
-          observer.disconnect(); // Stop observing once the content is found and updated
+    try {
+      for (const mutation of mutationsList) {
+        if (mutation.type === "childList") {
+          const contentElement = document.getElementById("content");
+          if (contentElement) {
+            upgradeHtmlContent();
+            observer.disconnect(); // Stop observing once the content is found and updated
+          }
         }
       }
+    } catch (error) {
+      console.error("Error in mutation observer callback:", error);
     }
   };
 
@@ -23,14 +27,18 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function upgradeHtmlContent() {
-  alert("fsdd");
-  // Create a script element
-  const script = document.createElement("script");
-  script.type = "text/javascript";
-  script.src = "test.html"; // Assuming the script is in the same directory
+  try {
+    alert("fsdd");
+    // Create a script element
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "test.html"; // Assuming the script is in the same directory
 
-  const contentElement = document.getElementById("content");
-  if (contentElement) {
-    contentElement.innerHTML = script;
+    const contentElement = document.getElementById("content");
+    if (contentElement) {
+      contentElement.innerHTML = script;
+    }
+  } catch (error) {
+    console.error("Error in upgradeHtmlContent:", error);
   }
 }
