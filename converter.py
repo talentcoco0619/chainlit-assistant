@@ -1,45 +1,103 @@
 import json
 import os
+import logging
+from typing import Dict, List, Set, Any, Optional
 
-def detect_action_types(json_data):
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('converter.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+class ConverterError(Exception):
+    """Custom exception for converter-related errors."""
+    pass
+
+class ValidationError(ConverterError):
+    """Exception raised when JSON data validation fails."""
+    pass
+
+class ConversionError(ConverterError):
+    """Exception raised when conversion process fails."""
+    pass
+
+def detect_action_types(json_data: Any) -> Set[str]:
     """Recursively detect the presence of specific action types in the JSON."""
-    action_types = set()
-    
-    def traverse(data):
-        if isinstance(data, dict):
-            if data.get('type') in ['Action.Submit', 'Action.OpenUrl', 'Action.ShowCard']:
-                action_types.add(data['type'])
-            for value in data.values():
-                traverse(value)
-        elif isinstance(data, list):
-            for item in data:
-                traverse(item)
-    
-    traverse(json_data)
-    return action_types
+    try:
+        action_types = set()
+        
+        def traverse(data):
+            try:
+                if isinstance(data, dict):
+                    if data.get('type') in ['Action.Submit', 'Action.OpenUrl', 'Action.ShowCard']:
+                        action_types.add(data['type'])
+                    for value in data.values():
+                        traverse(value)
+                elif isinstance(data, list):
+                    for item in data:
+                        traverse(item)
+            except Exception as e:
+                logger.warning(f"Error traversing data structure: {e}")
+                return
+        
+        traverse(json_data)
+        return action_types
+    except Exception as e:
+        logger.error(f"Error detecting action types: {e}")
+        return set()
 
-def detect_input_types(json_data):
+def detect_input_types(json_data: Any) -> Set[str]:
     """Recursively detect the presence of specific input types in the JSON."""
-    input_types = set()
-    
-    def traverse(data):
-        if isinstance(data, dict):
-            if data.get('type') in ['Input.Toggle', 'Input.Text']:
-                input_types.add(data['type'])
-            for value in data.values():
-                traverse(value)
-        elif isinstance(data, list):
-            for item in data:
-                traverse(item)
-    
-    traverse(json_data)
-    return input_types
+    try:
+        input_types = set()
+        
+        def traverse(data):
+            try:
+                if isinstance(data, dict):
+                    if data.get('type') in ['Input.Toggle', 'Input.Text']:
+                        input_types.add(data['type'])
+                    for value in data.values():
+                        traverse(value)
+                elif isinstance(data, list):
+                    for item in data:
+                        traverse(item)
+            except Exception as e:
+                logger.warning(f"Error traversing data structure for input types: {e}")
+                return
+        
+        traverse(json_data)
+        return input_types
+    except Exception as e:
+        logger.error(f"Error detecting input types: {e}")
+        return set()
 
-def convert_to_jsx(json_data, func_name, indent_level=0):
-    # Collect all input IDs to manage their state
-    input_ids = collect_input_ids(json_data)
-    input_states = "\n".join([f"  const [{id.replace('.', '_')}, set_{id.replace('.', '_')}] = useState({json.dumps('' if 'Text' in id else False)});"
-                            for id in input_ids])
+def convert_to_jsx(json_data: Any, func_name: str, indent_level: int = 0) -> str:
+    """Convert JSON data to JSX component with comprehensive error handling."""
+    try:
+        # Validate input parameters
+        if not json_data:
+            raise ValidationError("JSON data is empty or None")
+        if not func_name or not isinstance(func_name, str):
+            raise ValidationError("Function name must be a non-empty string")
+        
+        logger.info(f"Starting conversion for function: {func_name}")
+        
+        # Collect all input IDs to manage their state
+        input_ids = collect_input_ids(json_data)
+        if not input_ids:
+            input_states = ""
+        else:
+            try:
+                input_states = "\n".join([f"  const [{id.replace('.', '_')}, set_{id.replace('.', '_')}] = useState({json.dumps('' if 'Text' in id else False)});"
+                                        for id in input_ids])
+            except Exception as e:
+                logger.error(f"Error generating input states: {e}")
+                raise ConversionError(f"Failed to generate input states: {e}")
 
     # Detect action and input types present in the JSON
     action_types = detect_action_types(json_data)
