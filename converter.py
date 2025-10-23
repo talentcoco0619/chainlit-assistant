@@ -99,89 +99,147 @@ def convert_to_jsx(json_data: Any, func_name: str, indent_level: int = 0) -> str
                 logger.error(f"Error generating input states: {e}")
                 raise ConversionError(f"Failed to generate input states: {e}")
 
-    # Detect action and input types present in the JSON
-    action_types = detect_action_types(json_data)
-    input_types = detect_input_types(json_data)
-    
-    # Conditionally include imports and functions
-    imports = ["import { Card, CardContent } from \"@/components/ui/card\";"]
-    functions = []
-    if input_ids or 'Action.ShowCard' in action_types:
-        imports.append("import { useState } from \"react\";")
-    imports.append("import { Button } from \"@/components/ui/button\";")
-    if 'Input.Toggle' in input_types:
-        imports.append("import { Checkbox } from \"@/components/ui/checkbox\";")
-    if 'Input.Text' in input_types:
-        if any(json_data.get('isMultiline', False) for item in json_data.get('body', []) if item.get('type') == 'Input.Text'):
-            imports.append("import { Textarea } from \"@/components/ui/textarea\";")
-        else:
-            imports.append("import { Input } from \"@/components/ui/input\";")
+        # Detect action and input types present in the JSON
+        action_types = detect_action_types(json_data)
+        input_types = detect_input_types(json_data)
+        
+        # Conditionally include imports and functions
+        imports = ["import { Card, CardContent } from \"@/components/ui/card\";"]
+        functions = []
+        
+        try:
+            if input_ids or 'Action.ShowCard' in action_types:
+                imports.append("import { useState } from \"react\";")
+            imports.append("import { Button } from \"@/components/ui/button\";")
+            if 'Input.Toggle' in input_types:
+                imports.append("import { Checkbox } from \"@/components/ui/checkbox\";")
+            if 'Input.Text' in input_types:
+                # Check for multiline text inputs safely
+                is_multiline = False
+                try:
+                    body_items = json_data.get('body', [])
+                    if isinstance(body_items, list):
+                        is_multiline = any(
+                            item.get('isMultiline', False) 
+                            for item in body_items 
+                            if isinstance(item, dict) and item.get('type') == 'Input.Text'
+                        )
+                except Exception as e:
+                    logger.warning(f"Error checking multiline inputs: {e}")
+                
+                if is_multiline:
+                    imports.append("import { Textarea } from \"@/components/ui/textarea\";")
+                else:
+                    imports.append("import { Input } from \"@/components/ui/input\";")
+        except Exception as e:
+            logger.error(f"Error setting up imports: {e}")
+            raise ConversionError(f"Failed to set up imports: {e}")
 
-    # Generate formData content based on whether there are inputs
-    if input_ids and 'Action.Submit' in action_types:
-        input_fields = ', '.join([f"'{id}': {id.replace('.', '_')}" for id in input_ids])
-        data_content = f" name: data, payload: {{{input_fields}}}"
-    else:
-        data_content = " name: data, payload: {}" if 'Action.Submit' in action_types else ""
+        # Generate formData content based on whether there are inputs
+        try:
+            if input_ids and 'Action.Submit' in action_types:
+                input_fields = ', '.join([f"'{id}': {id.replace('.', '_')}" for id in input_ids])
+                data_content = f" name: data, payload: {{{input_fields}}}"
+            else:
+                data_content = " name: data, payload: {}" if 'Action.Submit' in action_types else ""
+        except Exception as e:
+            logger.error(f"Error generating form data content: {e}")
+            data_content = " name: data, payload: {}"
 
-    # Add state for showCards only if Action.ShowCard exists
-    state_declarations = "  const [showCards, setShowCards] = useState({});\n" if 'Action.ShowCard' in action_types else ""
+        # Add state for showCards only if Action.ShowCard exists
+        state_declarations = "  const [showCards, setShowCards] = useState({});\n" if 'Action.ShowCard' in action_types else ""
 
-    # Add handleSubmit only if Action.Submit exists
-    if 'Action.Submit' in action_types:
-        functions.append(f"""  const handleSubmit = (data) => {{
+        # Add handleSubmit only if Action.Submit exists
+        if 'Action.Submit' in action_types:
+            try:
+                functions.append(f"""  const handleSubmit = (data) => {{
                          console.log("Button clicked.");
     // Add your submit logic here
                          callAction({{{data_content}}})
   }};""")
+            except Exception as e:
+                logger.error(f"Error adding handleSubmit function: {e}")
+                functions.append("""  const handleSubmit = (data) => {
+    console.log("Button clicked.");
+    // Add your submit logic here
+    callAction({ name: data, payload: {} })
+  };""")
 
-    # Add handleOpenUrl only if Action.OpenUrl exists
-    if 'Action.OpenUrl' in action_types:
-        functions.append("""  const handleOpenUrl = (url) => {
+        # Add handleOpenUrl only if Action.OpenUrl exists
+        if 'Action.OpenUrl' in action_types:
+            functions.append("""  const handleOpenUrl = (url) => {
     window.open(url, '_blank');
     console.log("Opening URL:", url);
   };""")
 
-    # Add toggleShowCard only if Action.ShowCard exists
-    if 'Action.ShowCard' in action_types:
-        functions.append("""  const toggleShowCard = (id) => {
+        # Add toggleShowCard only if Action.ShowCard exists
+        if 'Action.ShowCard' in action_types:
+            functions.append("""  const toggleShowCard = (id) => {
     setShowCards(prev => ({ ...prev, [id]: !prev[id] }));
   };""")
 
-    # Combine imports and function definitions
-    header = "\n".join(imports) + f"\n\nexport default function {func_name}() {{\n{state_declarations}{input_states}\n" + "\n\n".join(functions) + "\n\n  return (\n    <Card className=\"max-w-md\">\n   <br></br>   <CardContent>\n"
-    
-    # Generate the main JSX content
-    main_content = convert_adaptive_card_content(json_data, indent_level + 3)
-    
-    # Close the component with CardContent
-    footer = f"""
+        # Combine imports and function definitions
+        try:
+            header = "\n".join(imports) + f"\n\nexport default function {func_name}() {{\n{state_declarations}{input_states}\n" + "\n\n".join(functions) + "\n\n  return (\n    <Card className=\"max-w-md\">\n   <br></br>   <CardContent>\n"
+        except Exception as e:
+            logger.error(f"Error generating header: {e}")
+            raise ConversionError(f"Failed to generate component header: {e}")
+        
+        # Generate the main JSX content
+        try:
+            main_content = convert_adaptive_card_content(json_data, indent_level + 3)
+        except Exception as e:
+            logger.error(f"Error generating main content: {e}")
+            main_content = "      <p>Error generating content</p>"
+        
+        # Close the component with CardContent
+        footer = f"""
       </CardContent>
     </Card>
   );
 }}
 """
-    
-    return f"{header}{main_content}{footer}"
+        
+        result = f"{header}{main_content}{footer}"
+        logger.info(f"Successfully converted {func_name}")
+        return result
+        
+    except ValidationError as e:
+        logger.error(f"Validation error in convert_to_jsx: {e}")
+        raise
+    except ConversionError as e:
+        logger.error(f"Conversion error in convert_to_jsx: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in convert_to_jsx: {e}")
+        raise ConversionError(f"Unexpected error during conversion: {e}")
 
-def collect_input_ids(json_data):
+def collect_input_ids(json_data: Any) -> List[str]:
     """Recursively collect all input IDs from the JSON data."""
-    input_ids = []
-    
-    def traverse(data):
-        if isinstance(data, dict):
-            if data.get('type') in ['Input.Toggle', 'Input.Text']:
-                input_id = data.get('id', '')
-                if input_id:
-                    input_ids.append(input_id)
-            for value in data.values():
-                traverse(value)
-        elif isinstance(data, list):
-            for item in data:
-                traverse(item)
-    
-    traverse(json_data)
-    return input_ids
+    try:
+        input_ids = []
+        
+        def traverse(data):
+            try:
+                if isinstance(data, dict):
+                    if data.get('type') in ['Input.Toggle', 'Input.Text']:
+                        input_id = data.get('id', '')
+                        if input_id and isinstance(input_id, str):
+                            input_ids.append(input_id)
+                    for value in data.values():
+                        traverse(value)
+                elif isinstance(data, list):
+                    for item in data:
+                        traverse(item)
+            except Exception as e:
+                logger.warning(f"Error traversing data for input IDs: {e}")
+                return
+        
+        traverse(json_data)
+        return input_ids
+    except Exception as e:
+        logger.error(f"Error collecting input IDs: {e}")
+        return []
 
 def convert_adaptive_card_content(json_data, indent_level=0):
     indent = "  " * indent_level
