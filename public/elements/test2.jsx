@@ -6,7 +6,11 @@ export default function feedbackText() {
   const [showCards, setShowCards] = useState({});
 
   const toggleShowCard = (id) => {
-    setShowCards((prev) => ({ ...prev, [id]: !prev[id] }));
+    try {
+      setShowCards((prev) => ({ ...prev, [id]: !prev[id] }));
+    } catch (error) {
+      console.error("Failed to toggle card visibility", error);
+    }
   };
 
   return (
